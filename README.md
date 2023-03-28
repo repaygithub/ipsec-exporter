@@ -1,4 +1,4 @@
-# IPsec Exporter ![Test](https://github.com/dennisstritzke/ipsec_exporter/workflows/Test/badge.svg)
+# IPsec Exporter ![Test](https://github.com/repaygithub/ipsec-exporter/workflows/Test/badge.svg)
 Prometheus exporter for ipsec metrics, written in Go.
 
 ## Functionality
