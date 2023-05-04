@@ -1,8 +1,11 @@
 package ipsec
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -122,4 +125,29 @@ func (l *ipSecConfigurationLoader) dropComments(lines []string) []string {
 	}
 
 	return filteredLines
+}
+
+func HandleGlobConfigPath(configPath string) (string, error) {
+	configFiles, err := filepath.Glob(configPath)
+	if err != nil {
+		return "", err
+	}
+	if len(configFiles) > 1 {
+		var buf bytes.Buffer
+		for _, file := range configFiles {
+			b, err := os.ReadFile(file)
+			if err != nil {
+				return "", err
+			}
+			buf.Write(b)
+			buf.WriteString(fmt.Sprintln())
+		}
+		mergedConfigFile := "/tmp/exporting-ipsec.conf"
+		err := os.WriteFile(mergedConfigFile, buf.Bytes(), 0644)
+		if err != nil {
+			return "", err
+		}
+		return mergedConfigFile, nil
+	}
+	return configPath, nil
 }

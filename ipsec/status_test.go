@@ -2,6 +2,8 @@ package ipsec
 
 import (
 	"errors"
+	"os"
+	"path"
 	"testing"
 )
 
@@ -98,6 +100,34 @@ Security Associations (1 up, 0 connecting):
 	actualPacketsOut := status[tunnelName][tunnelInstanceId].packetsOut
 	if actualPacketsOut != expectedPacketsOut {
 		t.Errorf("Expected '%d' received bytes, but was '%d'", expectedPacketsOut, actualPacketsOut)
+	}
+}
+
+func TestGlobConfigPathHandling(t *testing.T) {
+	dir, err := os.MkdirTemp("", "ipsec-exporter-glob-config-test")
+	if err != nil {
+		t.Errorf("Failed to create a temp dir for the test: '%s'.", err)
+		return
+	}
+	err = os.WriteFile(path.Join(dir, "example1.conf"), []byte("test1"), 0777)
+	if err != nil {
+		t.Errorf("Failed to create a test file for the test: '%s'.", err)
+		return
+	}
+	err = os.WriteFile(path.Join(dir, "example2.conf"), []byte("test2"), 0777)
+	if err != nil {
+		t.Errorf("Failed to create a test file for the test: '%s'.", err)
+		return
+	}
+	originalPath := path.Join(dir, "*.conf")
+	mergedPath, err := HandleGlobConfigPath(path.Join(dir, "*.conf"))
+	if err != nil {
+		t.Errorf("Failed to merge configurations into a new file: '%s'.", err)
+		return
+	}
+	if originalPath == mergedPath {
+		t.Errorf("Configurations were not merged, the glob path remained unresolved")
+		return
 	}
 }
 

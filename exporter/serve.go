@@ -1,11 +1,7 @@
 package exporter
 
 import (
-	"bytes"
-	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/dennisstritzke/ipsec_exporter/ipsec"
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,33 +14,9 @@ var WebListenAddress string
 
 var ipSecConfiguration *ipsec.Configuration
 
-func HandleGlobConfigPath() error {
-	configFiles, err := filepath.Glob(IpSecConfigFile)
-	if err != nil {
-		return err
-	}
-	if len(configFiles) > 1 {
-		var buf bytes.Buffer
-		for _, file := range configFiles {
-			b, err := os.ReadFile(file)
-			if err != nil {
-				return err
-			}
-			buf.Write(b)
-			buf.WriteString(fmt.Sprintln())
-		}
-		IpSecConfigFile = "/tmp/exporting-ipsec.conf"
-		err := os.WriteFile(IpSecConfigFile, buf.Bytes(), 0644)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func Serve() {
 	var err error
-	err = HandleGlobConfigPath()
+	IpSecConfigFile, err = ipsec.HandleGlobConfigPath(IpSecConfigFile)
 	if err != nil {
 		log.Fatal(err)
 		return
