@@ -1,6 +1,8 @@
 package ipsec
 
 import (
+	"os"
+	"path"
 	"testing"
 )
 
@@ -184,5 +186,42 @@ func TestIgnoreComments(t *testing.T) {
 func checkInput(t *testing.T, sliced []string, index int, expected string) {
 	if sliced[index] != expected {
 		t.Errorf("Expected inputSliced[%d] to be %s but was %s", index, expected, sliced[index])
+	}
+}
+
+func TestGlobConfigPathHandling(t *testing.T) {
+	dir, err := os.MkdirTemp("", "ipsec-exporter-glob-config-test")
+	originalPath := path.Join(dir, "*.conf")
+	if err != nil {
+		t.Errorf("Failed to create a temp dir for the test: '%s'.", err)
+		return
+	}
+	err = os.WriteFile(path.Join(dir, "example1.conf"), []byte("test1"), 0644)
+	if err != nil {
+		t.Errorf("Failed to create a test file for the test: '%s'.", err)
+		return
+	}
+	mergedPath, err := HandleGlobConfigPath(path.Join(dir, "*.conf"))
+	if err != nil {
+		t.Errorf("Failed to resolve glob path: '%s'.", err)
+		return
+	}
+	if originalPath == mergedPath {
+		t.Errorf("Configuration was not found, the glob path remained unresolved")
+		return
+	}
+	err = os.WriteFile(path.Join(dir, "example2.conf"), []byte("test2"), 0644)
+	if err != nil {
+		t.Errorf("Failed to create a test file for the test: '%s'.", err)
+		return
+	}
+	mergedPath, err = HandleGlobConfigPath(path.Join(dir, "*.conf"))
+	if err != nil {
+		t.Errorf("Failed to merge configurations into a new file: '%s'.", err)
+		return
+	}
+	if originalPath == mergedPath {
+		t.Errorf("Configurations were not merged, the glob path remained unresolved")
+		return
 	}
 }

@@ -132,7 +132,7 @@ func HandleGlobConfigPath(configPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(configFiles) > 1 {
+	if len(configFiles) > 0 && configFiles[0] != configPath {
 		var buf bytes.Buffer
 		for _, file := range configFiles {
 			b, err := os.ReadFile(file)
