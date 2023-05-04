@@ -1,11 +1,15 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	"github.com/dennisstritzke/ipsec_exporter/exporter"
 	"github.com/dennisstritzke/ipsec_exporter/ipsec"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 const (
@@ -27,6 +31,30 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&exporter.IpSecConfigFile, flagIpsecConfigFile,
 		"/etc/ipsec.conf",
 		"Path to the ipsec config file.")
+
+	configFiles, err := filepath.Glob(exporter.IpSecConfigFile)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if len(configFiles) > 1 {
+		var buf bytes.Buffer
+		for _, file := range configFiles {
+			b, err := ioutil.ReadFile(file)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			buf.Write(b)
+			buf.WriteString(fmt.Sprintln())
+		}
+		exporter.IpSecConfigFile = "/tmp/exporting-ipsec.conf"
+		err := ioutil.WriteFile(exporter.IpSecConfigFile, buf.Bytes(), 0644)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
 
 	RootCmd.PersistentFlags().StringVar(&exporter.WebListenAddress, flagWebListenAddress,
 		"0.0.0.0:9536",
